@@ -1012,14 +1012,39 @@ static void print_header(void)
 		html_txt(ctx.cfg.root_title);
 	html("</td></tr>\n");
 
+	// CPU Temperature addon
+	int temp_raw;
+	char cputempstr[128];
+	FILE* fcputemp;
+	int cputemp = 0;
+
+	fcputemp = fopen("/sys/devices/virtual/thermal/thermal_zone0/temp", "r");
+	if (fcputemp != NULL) {
+		rewind(fcputemp);
+		cputemp = fscanf(fcputemp, "%d", &temp_raw);
+		fclose(fcputemp);
+
+		if (cputemp)
+			cputemp = snprintf(cputempstr, sizeof cputempstr, "CPU %.1fC", temp_raw/1000.0f);
+	}
+
 	html("<tr><td class='sub'>");
 	if (ctx.repo) {
 		html_txt(ctx.repo->desc);
 		html("</td><td class='sub right'>");
 		html_txt(ctx.repo->owner);
+		if (cputemp) {
+			html_txt(" - ");
+			html_txt(cputempstr);
+		}
 	} else {
 		if (ctx.cfg.root_desc)
 			html_txt(ctx.cfg.root_desc);
+		
+		if (cputemp) {
+			html("</td><td class='sub right'>");
+			html_txt(cputempstr);
+		}
 	}
 	html("</td></tr></table>\n");
 }
